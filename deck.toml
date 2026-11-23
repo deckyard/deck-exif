@@ -1,0 +1,26 @@
+[package]
+name = "@deckyard/exif"
+version = "0.1.0"
+description = "Read, modify and delete EXIF metadata in JPEG, PNG and WebP images"
+license = "LGPL-3.0-only"
+authors = ["mplx <mplx@jennifer-lang.dev>"]
+capabilities = []
+keywords = [
+    "exif",
+    "metadata",
+    "jpeg",
+    "png",
+    "webp",
+    "tiff",
+    "gps",
+    "privacy",
+    "image",
+]
+
+[package.urls]
+deck = "https://raw.githubusercontent.com/deckyard/deck-exif/main/deck.toml"
+homepage = "https://github.com/deckyard/deck-exif"
+manual = "https://deckyard.github.io/deck-exif/"
+
+[engines]
+jennifer = ">=0.27.0"
