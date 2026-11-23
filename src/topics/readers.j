@@ -222,7 +222,8 @@ func offsetText(seconds as int) {
  * A date and time tag as a time. The zone is the matching `OffsetTime*`
  * tag when the image has one, else `zone`: EXIF times are the camera's
  * local time, and only the caller knows which zone that was. The matching
- * `SubSecTime*` tag adds the fraction of a second.
+ * `SubSecTime*` tag adds the fraction of a second; a blank one (spaces
+ * only, the standard's "unknown") adds nothing.
  *
  * @param x {Exif} the metadata
  * @param tag {string} `"DateTimeOriginal"`, `"DateTimeDigitized"` or `"DateTime"`
@@ -263,10 +264,12 @@ export func dateTime(x as Exif, tag as string, zone as time.Zone) {
     def fraction as string init "";
     if (has($x, $subTag)) {
         def sub as string init strings.trimRightSet(text($x, $subTag), " ");
-        if (not regex.matches('^\d{1,9}$', $sub)) {
-            fail($subTag + " is not digits: \"" + $sub + "\"");
+        if ($sub != "") {
+            if (not regex.matches('^\d{1,9}$', $sub)) {
+                fail($subTag + " is not digits: \"" + $sub + "\"");
+            }
+            $fraction = "." + $sub;
         }
-        $fraction = "." + $sub;
     }
     return isoTime(
         $p[0] + "-" + $p[1] + "-" + $p[2] + "T" + $p[3] + ":" + $p[4] + ":" + $p[5] + $fraction +

@@ -152,6 +152,7 @@ number (`"gps:0x0002"`, `"exif:42036"`).
 | `MAX_BYTES` | `16777216` | Default cap on one EXIF payload. |
 | `MAX_ENTRIES` | `1000` | Default cap on the entries of one IFD. |
 | `MAX_VALUE_BYTES` | `1048576` | Default cap on one value (and the thumbnail). |
+| `MAX_NUMBERS` | `65536` | Cap on the numbers all values decode to; fixed. |
 
 ## Errors and options
 

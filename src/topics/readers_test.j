@@ -152,6 +152,17 @@ func testDateTimeRefuses() {
         "exif");
 }
 
+# A blank SubSecTime is the standard's "unknown": the time has no fraction.
+func testDateTimeIgnoresABlankSubSecTime() {
+    def x as Exif init setText(empty("le"), "DateTimeOriginal", "2026:01:01 10:00:00");
+    def plain as time.Time init dateTime($x, "DateTimeOriginal", time.UTC);
+    for (def blank in ["", "   "]) {
+        testing.assertEqual(
+            dateTime(setText($x, "SubSecTimeOriginal", $blank), "DateTimeOriginal", time.UTC),
+            $plain);
+    }
+}
+
 func testGpsTime() {
     def x as Exif init setText(empty("be"), "GPSDateStamp", "2026:11:23");
     $x = setRationals(

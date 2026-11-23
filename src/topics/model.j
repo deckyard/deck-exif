@@ -195,7 +195,11 @@ func checkEntry(e as Entry) {
         fail($what + " is a pointer the writer computes and cannot be set");
     }
     if ($e.tag == TAG_STRIP_OFFSETS or $e.tag == TAG_TILE_OFFSETS) {
-        fail($what + " points at image data the writer does not carry; use removeThumbnail");
+        if ($e.ifd == IFD1) {
+            fail($what +
+                " points at an uncompressed thumbnail the writer does not carry; use removeThumbnail");
+        }
+        fail($what + " points at image data the writer does not carry; remove the tag");
     }
     if (typeSize($e.type) == 0) {
         fail($what + ": unknown field type " + convert.toString($e.type));
