@@ -14,6 +14,14 @@ export def const MAX_ENTRIES as int init 1000;
 /** The default cap on the bytes of one value (`count` times the type's size): 1 MiB. */
 export def const MAX_VALUE_BYTES as int init 1048576;
 
+/**
+ * The cap on the numbers (integers, rational parts, floats) one payload
+ * decodes to. Each costs far more memory than its bytes, and every value
+ * may point at the same bytes, so this bounds memory where the byte caps
+ * do not. Text and raw bytes do not count. Fixed: `Options` does not change it.
+ */
+export def const MAX_NUMBERS as int init 65536;
+
 /** The largest unsigned 32-bit value. */
 def const UINT32_MAX as int init 4294967295;
 

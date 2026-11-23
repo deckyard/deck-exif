@@ -34,7 +34,7 @@ Functions that change an `Exif` return the changed copy:
 | Kind | Thrown as | When |
 |---|---|---|
 | `"exif"` | `exif.ExifError{kind, message, offset}` | malformed image or EXIF data (`offset` is where, in the bytes you passed), or misuse: an unknown tag name, a value that does not fit its type, an absent tag read with `get` / `text` / ... |
-| `"limit"` | `Error` | a cap was reached: 16 MiB of EXIF, 1,000 entries in one IFD, 1 MiB in one value (lower them with `readWith` / `parseWith`) |
+| `"limit"` | `Error` | a cap was reached: 16 MiB of EXIF (also the total its values decode to), 1,000 entries in one IFD, 1 MiB in one value, 65,536 numbers in all values (lower the first three with `readWith` / `parseWith`); `write` refuses metadata over the default caps the same way |
 
 `fs` errors from `readFile`, `writeFile` and `stripFile` pass through
 unchanged. Match the kind, never the message:

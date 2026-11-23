@@ -12,12 +12,16 @@
  * @field end {int} the first byte past the payload
  * @field order {string} `"le"` or `"be"`
  * @field caps {Options} the caps in force
+ * @field bytesLeft {int} value bytes the IFDs not yet read may still decode
+ * @field numbersLeft {int} numbers the IFDs not yet read may still decode
  */
 def struct Payload {
     base as int,
     end as int,
     order as string,
-    caps as Options
+    caps as Options,
+    bytesLeft as int,
+    numbersLeft as int
 };
 
 /**
@@ -26,11 +30,15 @@ def struct Payload {
  * @field entries {list of Entry} the entries, without the structural tags
  * @field next {int} the next-IFD offset, 0 for none
  * @field pointers {map of int to int} structural tag to its value (IFD pointers, thumbnail offset and length)
+ * @field bytesUsed {int} the value bytes its entries decoded
+ * @field numbersUsed {int} the numbers its entries decoded
  */
 def struct IfdRead {
     entries as list of Entry,
     next as int,
-    pointers as map of int to int
+    pointers as map of int to int,
+    bytesUsed as int,
+    numbersUsed as int
 };
 
 /**
@@ -75,7 +83,14 @@ func parseAt(data as bytes, base as int, end as int, options as Options) {
     } else {
         failAt("bad TIFF header: byte order is neither II nor MM", $base);
     }
-    def p as Payload init Payload{base: $base, end: $end, order: $order, caps: $caps};
+    def p as Payload init Payload{
+        base: $base,
+        end: $end,
+        order: $order,
+        caps: $caps,
+        bytesLeft: $caps.maxBytes,
+        numbersLeft: MAX_NUMBERS
+    };
     if (binary.readUint($order, $data, $base + 2, 2) != 42) {
         failAt("bad TIFF header: the magic number is not 42", $base + 2);
     }
@@ -92,6 +107,7 @@ func parseAt(data as bytes, base as int, end as int, options as Options) {
         $out.entries[] = $e;
     }
     $seen = seenAfter($seen, $ifd0);
+    $p = spent($p, $ifd0);
 
     if (maps.has($ifd0.pointers, TAG_EXIF_POINTER)) {
         def sub as IfdRead init readSub(
@@ -101,6 +117,7 @@ func parseAt(data as bytes, base as int, end as int, options as Options) {
             $ifd0.pointers[TAG_EXIF_POINTER],
             $seen);
         $seen = seenAfter($seen, $sub);
+        $p = spent($p, $sub);
         for (def e in $sub.entries) {
             $out.entries[] = $e;
         }
@@ -112,6 +129,7 @@ func parseAt(data as bytes, base as int, end as int, options as Options) {
                 $sub.pointers[TAG_INTEROP_POINTER],
                 $seen);
             $seen = seenAfter($seen, $inter);
+            $p = spent($p, $inter);
             for (def e in $inter.entries) {
                 $out.entries[] = $e;
             }
@@ -125,6 +143,7 @@ func parseAt(data as bytes, base as int, end as int, options as Options) {
             $ifd0.pointers[TAG_GPS_POINTER],
             $seen);
         $seen = seenAfter($seen, $gpsIfd);
+        $p = spent($p, $gpsIfd);
         for (def e in $gpsIfd.entries) {
             $out.entries[] = $e;
         }
@@ -157,6 +176,19 @@ func seenAfter(seen as list of int, ifd as IfdRead) {
         $seen[] = $ifd.pointers[-1];
     }
     return $seen;
+}
+
+/**
+ * The payload with an IFD's decoded values taken off its budgets.
+ *
+ * @param p {Payload} the payload
+ * @param ifd {IfdRead} the IFD just read
+ * @return {Payload} the payload with smaller budgets
+ */
+func spent(p as Payload, ifd as IfdRead) {
+    $p.bytesLeft = $p.bytesLeft - $ifd.bytesUsed;
+    $p.numbersLeft = $p.numbersLeft - $ifd.numbersUsed;
+    return $p;
 }
 
 /**
@@ -210,7 +242,13 @@ func readIfd(data as bytes, p as Payload, ifd as string, offset as int, seen as 
             convert.toString($p.caps.maxEntries));
     }
     need($at, 2 + 12 * $n + 4, $p.end, $ifd + " IFD");
-    def out as IfdRead init IfdRead{entries: [], next: 0, pointers: {-1: $offset}};
+    def out as IfdRead init IfdRead{
+        entries: [],
+        next: 0,
+        pointers: {-1: $offset},
+        bytesUsed: 0,
+        numbersUsed: 0
+    };
     def tags as map of int to bool init {};
     for (def i in 0..$n) {
         def e as int init $at + 2 + 12 * $i;
@@ -253,6 +291,17 @@ func readIfd(data as bytes, p as Payload, ifd as string, offset as int, seen as 
             }
             $out.pointers[$tag] = binary.readUint($p.order, $data, $valueAt, 4);
         } else {
+            # values may share bytes, so the payload cap alone does not bound what is decoded
+            $out.bytesUsed = $out.bytesUsed + $bytesNeeded;
+            if ($out.bytesUsed > $p.bytesLeft) {
+                failLimit("the values decode to more than the cap of " +
+                    convert.toString($p.caps.maxBytes) + " bytes");
+            }
+            $out.numbersUsed = $out.numbersUsed + numbersOf($type, $count);
+            if ($out.numbersUsed > $p.numbersLeft) {
+                failLimit("the values hold more than " + convert.toString(MAX_NUMBERS) +
+                    " numbers");
+            }
             def value as Value init decodeValue($data, $p.order, $type, $count, $valueAt);
             $out.entries[] = Entry{ifd: $ifd, tag: $tag, type: $type, count: $count, value: $value};
         }
@@ -260,6 +309,23 @@ func readIfd(data as bytes, p as Payload, ifd as string, offset as int, seen as 
     $out.next = binary.readUint($p.order, $data, $at + 2 + 12 * $n, 4);
     $out.entries = sortedEntries($out.entries);
     return $out;
+}
+
+/**
+ * How many numbers a value decodes to; text and raw bytes decode to none.
+ *
+ * @param type {int} the field type
+ * @param count {int} the count
+ * @return {int} `count`, twice that for rationals, 0 for `ASCII` and `UNDEFINED`
+ */
+func numbersOf(type as int, count as int) {
+    if ($type == TYPE_ASCII or $type == TYPE_UNDEFINED) {
+        return 0;
+    }
+    if ($type == TYPE_RATIONAL or $type == TYPE_SRATIONAL) {
+        return 2 * $count;
+    }
+    return $count;
 }
 
 /**
@@ -593,13 +659,18 @@ export func render(x as Exif) {
  * @param x {Exif} the metadata
  * @return {list of list of Slot} five groups: IFD0, Exif, Interop, GPS, IFD1
  * @throws {ExifError} for an entry that does not check out or a tag twice in one IFD
- * @throws {Error} kind "limit" for a value over `MAX_VALUE_BYTES`
+ * @throws {Error} kind "limit" for a value over `MAX_VALUE_BYTES`, or more than 65,536 numbers
  */
 func slotsOf(x as Exif) {
     def groups as list of list of Slot init [[], [], [], [], []];
     def seen as map of string to bool init {};
+    def numbers as int init 0;
     for (def e in $x.entries) {
         checkEntry($e);
+        $numbers = $numbers + numbersOf($e.type, $e.count);
+        if ($numbers > MAX_NUMBERS) {
+            failLimit("the values hold more than " + convert.toString(MAX_NUMBERS) + " numbers");
+        }
         def key as string init $e.ifd + ":" + convert.toString($e.tag);
         if (maps.has($seen, $key)) {
             fail(label($e.ifd, $e.tag) + " appears twice");

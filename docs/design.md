@@ -149,6 +149,8 @@ NUL, bytes after a PNG's `IEND` (copied unchanged).
 | EXIF payload size | 16 MiB (`maxBytes`) | `"limit"` |
 | entries in one IFD | 1,000 (`maxEntries`) | `"limit"` |
 | bytes of one value (`count` x type size), and the thumbnail | 1 MiB (`maxValueBytes`) | `"limit"` |
+| bytes all values decode to | the payload cap (`maxBytes`) | `"limit"` |
+| numbers all values decode to (integers, rational parts, floats) | 65,536, fixed | `"limit"` |
 
 `readWith` and `parseWith` take `Options`; a zero field keeps the default,
 a negative one or one above the default is an `"exif"` error (the caps only
@@ -157,6 +159,13 @@ IFD1, Exif, GPS, Interop), nesting at most two deep, and every IFD offset
 is checked against those already read, so a crafted loop is an error, not a
 hang. The value cap is checked before the value is bounds-checked, so a
 huge `count` is `"limit"` even when it also runs past the end.
+
+The two totals bound memory where the payload cap does not: values may all
+point at the same bytes, so a 1 MiB payload could otherwise decode to
+gigabytes, and a decoded number costs hundreds of bytes (a 1 MiB `BYTE`
+value took 2 GB). Real images keep their numeric values small; long data is
+`UNDEFINED`. `render`, and with it `write`, refuses metadata over any
+default cap with `"limit"`, so the deck never writes what it cannot read.
 
 ## Testing and validation
 

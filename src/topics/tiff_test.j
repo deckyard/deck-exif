@@ -466,6 +466,49 @@ func testParseCaps() {
     testing.assertThrowsArgs("parse", [$many], "limit");
 }
 
+# A little-endian payload whose IFD0 has `n` entries of one type and count,
+# all pointing at the same value bytes after the table.
+func fxShared(n as int, type as int, count as int, size as int) {
+    def valueAt as int init 8 + 2 + 12 * $n + 4;
+    def parts as list of bytes init [fxHeader("le", 8), fxUint("le", $n, 2)];
+    for (def i in 0..$n) {
+        $parts[] = fxUint("le", 0xC000 + $i, 2);
+        $parts[] = fxUint("le", $type, 2);
+        $parts[] = fxUint("le", $count, 4);
+        $parts[] = fxUint("le", $valueAt, 4);
+    }
+    $parts[] = fxUint("le", 0, 4);
+    $parts[] = binary.make($count * $size);
+    return binary.join($parts);
+}
+
+func testParseCapsWhatValuesDecodeTo() {
+    # one 1 MiB BYTE value used to take 2 GB of memory, and values sharing
+    # their bytes multiplied that within the payload cap
+    testing.assertThrowsArgs("parse", [fxShared(1, 1, MAX_NUMBERS + 1, 1)], "limit");
+    testing.assertThrowsArgs("parse", [fxShared(3, 3, MAX_NUMBERS // 2, 2)], "limit");
+    testing.assertThrowsArgs("parse", [fxShared(2, 5, MAX_NUMBERS // 4 + 1, 8)], "limit");
+    testing.assertEqual(len(parse(fxShared(2, 3, MAX_NUMBERS // 2, 2)).entries), 2);
+    # raw bytes do not count as numbers, but their total is capped
+    testing.assertEqual(len(parse(fxShared(20, 7, 100000, 1)).entries), 20);
+    testing.assertThrowsArgs("parse", [fxShared(17, 7, MAX_VALUE_BYTES, 1)], "limit");
+    testing.assertThrowsArgs(
+        "parseWith",
+        [fxShared(3, 7, 1000, 1), Options{maxBytes: 2999, maxEntries: 0, maxValueBytes: 0}],
+        "limit");
+    # render refuses what parse would
+    def zeros as list of int init [];
+    for (def i in 0..MAX_NUMBERS) {
+        $zeros[] = 0;
+    }
+    def x as Exif init set(
+        empty("be"),
+        makeEntry("exif:0xC000", TYPE_BYTE, Value.Ints{values: $zeros}));
+    testing.assertEqual(parse(render($x)), $x);
+    $x = set($x, makeEntry("exif:0xC001", TYPE_BYTE, Value.Ints{values: [1]}));
+    testing.assertThrowsArgs("render", [$x], "limit");
+}
+
 func testParseKeepsUnsortedEntriesSorted() {
     def p as bytes init fxPayload(
         "be",
