@@ -4,7 +4,7 @@
 # Tag table
 
 The tags the deck knows by name, with the field type the setters write.
-A bare name finds its IFD here; the TIFF tags default to IFD0 and reach
+A bare name finds its IFD here; the TIFF™ tags default to IFD0 and reach
 IFD1 as `"ifd1:Name"`. Any other tag is named by IFD and number
 (`"exif:0xA460"`) and set with `makeEntry`. Names follow Exif 2.32
 (`PhotographicSensitivity` is the ISO speed).

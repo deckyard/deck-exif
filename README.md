@@ -48,6 +48,15 @@ tools/check-docs.sh                  # docs against the code
 tools/pack.sh dist                   # build the release archive
 ```
 
+## Trademarks
+
+XMP™ is a trademark of Adobe Inc. Canon™ is a trademark of Canon Inc. Sony™
+is a trademark of Sony Group Corporation or its affiliates. TIFF™, DNG™ and
+other product and company names may be trademarks of their respective
+owners. They are used only to identify the formats and cameras this deck
+works with. This deck is an independent project, not affiliated with,
+sponsored or endorsed by Adobe Inc. or any camera maker.
+
 ## Licence
 
 LGPL-3.0-only, see [LICENSE](LICENSE). Copyright (C) 2026 mplx &lt;mplx@jennifer-lang.dev&gt;.

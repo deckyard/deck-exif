@@ -13,24 +13,24 @@ pure Jennifer, on `bytes`: no subprocess, no network, `fs` only in the
   `eXIf` chunk) and WebP (the `EXIF` chunk of the extended format, flagged
   in `VP8X`). The container is detected from the first bytes, never from a
   file name; anything else is an error.
-- **The EXIF structure**: the TIFF header (`II` / `MM`, 42), IFD0, the Exif
+- **The EXIF structure**: the TIFF™ header (`II` / `MM`, 42), IFD0, the Exif
   IFD (pointer tag `0x8769`), the GPS IFD (`0x8825`), the Interoperability
   IFD (`0xA005`, inside the Exif IFD) and IFD1 with its JPEG thumbnail. All
   twelve TIFF field types are read and written.
 
 Not in scope:
 
-- **TIFF-based raw files (DNG, CR2, NEF, ...) and HEIC / AVIF.** In a raw file
+- **TIFF-based raw files (DNG™, CR2, NEF, ...) and HEIC / AVIF.** In a raw file
   the EXIF structure *is* the image container, with strip and tile offsets
   pointing at pixel data; rewriting it is a different problem. HEIC keeps
   EXIF in an ISO-BMFF item whose location table would have to be rewritten.
-- **XMP and IPTC.** They live in their own segments and chunks (JPEG APP1
+- **XMP™ and IPTC.** They live in their own segments and chunks (JPEG APP1
   with the XMP namespace, APP13; PNG `iTXt`; WebP `XMP `) and are left as
   they are, also by `strip`. A privacy tool must remove them separately.
 - **Decoding MakerNotes.** Vendor data is opaque.
-- **Multi-segment EXIF** (the FlashPix extension over several APP2
+- **Multi-segment EXIF** (the FlashPix™ extension over several APP2
   segments) and EXIF in PNG text chunks (`zTXt` "Raw profile type exif",
-  ImageMagick's older form): not read, not written.
+  ImageMagick™'s older form): not read, not written.
 
 ## Decisions
 
@@ -83,7 +83,7 @@ Not in scope:
   Interop, GPS, 1) and tag, and `set` inserts there, so `read(write(img,
   e)) == e` for any `e` built with the setters.
 - **MakerNote is kept byte for byte but may move.** Many vendors store
-  offsets in it relative to the TIFF header (Canon, older Olympus, Sony);
+  offsets in it relative to the TIFF header (Canon™, older Olympus™, Sony™);
   after a rewrite those point at the wrong bytes, and vendor tools can no
   longer read the MakerNote. Keeping it at its old offset would constrain
   the whole layout around one opaque block, for a guarantee the writer

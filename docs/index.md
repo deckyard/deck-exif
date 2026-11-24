@@ -50,3 +50,12 @@ try {
     io.printf("not readable at byte %d: %s\n", $bad.offset, $bad.message);
 }
 ```
+
+## Trademarks
+
+XMP™ is a trademark of Adobe Inc. Canon™ is a trademark of Canon Inc. Sony™
+is a trademark of Sony Group Corporation or its affiliates. TIFF™, DNG™ and
+other product and company names may be trademarks of their respective
+owners. They are used only to identify the formats and cameras this deck
+works with. This deck is an independent project, not affiliated with,
+sponsored or endorsed by Adobe Inc. or any camera maker.

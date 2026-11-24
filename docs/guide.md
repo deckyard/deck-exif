@@ -77,8 +77,8 @@ $e = exif.set($e, $entry);
 `write` re-serialises the whole EXIF structure. Two consequences:
 
 - The MakerNote is kept byte for byte, but it may move. Vendors that store
-  offsets inside it relative to the TIFF header (Canon, Sony, older
-  Olympus) then point at the wrong bytes, and their tools may no longer
+  offsets inside it relative to the TIFF™ header (Canon™, Sony™, older
+  Olympus™) then point at the wrong bytes, and their tools may no longer
   read it. Remove it (`exif.remove($e, "MakerNote")`) when that matters
   more than keeping it.
 - A JPEG holds at most 65,527 bytes of EXIF; a larger one (a big thumbnail
@@ -93,6 +93,6 @@ $e = exif.removeThumbnail($e);                             # the preview image
 ```
 
 The thumbnail is worth removing when sharing a cropped or edited photo: it
-still shows the original. `strip` removes EXIF only; XMP and IPTC metadata
+still shows the original. `strip` removes EXIF only; XMP™ and IPTC metadata
 in their own segments stay. [examples/privacy.j](https://github.com/deckyard/deck-exif/blob/main/examples/privacy.j)
 removes location, thumbnail and serial numbers.
