@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: LGPL-3.0-only
 # SPDX-FileCopyrightText: Copyright (C) 2026 mplx <mplx@jennifer-lang.dev>
-# pragma-jennifer-version: >=0.27.0
+# pragma-jennifer-version: >=0.28.0
 
 # exif - white-box tests for the readers topic.
 # Spliced into exif_test.j via include - run with:
@@ -118,8 +118,8 @@ func testDateTime() {
     $x = setText($x, "SubSecTimeOriginal", "25");
     $t = dateTime($x, "DateTimeOriginal", time.UTC);
     testing.assertEqual(
-        time.unixMillis($t),
-        time.unixMillis(time.fromIso("2026-11-23T19:35:09.25Z")));
+        time.unixMilliseconds($t),
+        time.unixMilliseconds(time.fromIso("2026-11-23T19:35:09.25Z")));
 }
 
 func testDateTimeTags() {
@@ -171,8 +171,8 @@ func testGpsTime() {
         [Rational{num: 13, den: 1}, Rational{num: 4, den: 1}, Rational{num: 5125, den: 100}]);
     def t as time.Time init gpsTime($x);
     testing.assertEqual(
-        time.unixMillis($t),
-        time.unixMillis(time.fromIso("2026-11-23T13:04:51.25Z")));
+        time.unixMilliseconds($t),
+        time.unixMilliseconds(time.fromIso("2026-11-23T13:04:51.25Z")));
     testing.assertThrowsArgs("gpsTime", [setText($x, "GPSDateStamp", "2026-11-23")], "exif");
     testing.assertThrowsArgs(
         "gpsTime",

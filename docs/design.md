@@ -200,6 +200,6 @@ default cap with `"limit"`, so the deck never writes what it cannot read.
 
 ## Dependencies on the interpreter
 
-Floor `>=0.27.0`: `binary.readUint` / `readInts` / `readFloats` /
+Floor `>=0.28.0` (the calls 0.29.0 removes are replaced by their 0.28.0 forms): `binary.readUint` / `readInts` / `readFloats` /
 `indexOf`, `crc`, thrown structs keeping their identity. Runs on the default
 binary; `jennifer-tiny` is not declared.

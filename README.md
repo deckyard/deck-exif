@@ -36,7 +36,7 @@ fs.writeBytes("shared.jpg", exif.write($img, $e));
 
 ## Requirements
 
-Jennifer 0.27.0 or newer. Pure Jennifer: no network, no external programs;
+Jennifer 0.28.0 or newer. Pure Jennifer: no network, no external programs;
 only `readFile`, `writeFile` and `stripFile` touch the disk.
 
 ## Development
